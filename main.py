@@ -16,16 +16,24 @@ load_dotenv()
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Logging setup
+# App Runner port configuration
+PORT = int(os.getenv("PORT", 8000))
+
+# Optimize for ML workloads
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["PYTHONUNBUFFERED"] = "1"
+
+# Logging setup with better formatting for App Runner
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 
+# Configure logging for App Runner
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     handlers=[
         logging.FileHandler(os.path.join(LOG_DIR, "app.log"), encoding='utf-8'),
-        logging.StreamHandler()
+        logging.StreamHandler(sys.stdout)  # Use stdout for App Runner logs
     ]
 )
 
@@ -35,14 +43,37 @@ logger = logging.getLogger(__name__)
 engine = None
 SessionLocal = None
 
+def verify_ml_dependencies():
+    """Verify that ML dependencies are properly installed"""
+    try:
+        import torch
+        import torchvision
+        import cv2
+        import skimage
+        import imagehash
+        import numpy as np
+        
+        logger.info("ML Dependencies Check:")
+        logger.info(f"- PyTorch version: {torch.__version__}")
+        logger.info(f"- TorchVision version: {torchvision.__version__}")
+        logger.info(f"- OpenCV version: {cv2.__version__}")
+        logger.info(f"- Scikit-Image version: {skimage.__version__}")
+        logger.info(f"- NumPy version: {np.__version__}")
+        logger.info("SUCCESS: All ML dependencies loaded successfully")
+        return True
+        
+    except ImportError as e:
+        logger.error(f"FAILED: ML dependency import error: {e}")
+        return False
+
 def create_database_engine():
-    """Create database engine optimized for AWS RDS"""
+    """Create database engine optimized for AWS RDS on App Runner"""
     if not DATABASE_URL:
         logger.error("DATABASE_URL not found in environment variables")
         return None
     
     try:
-        # AWS RDS optimized connection parameters
+        # AWS RDS optimized connection parameters for App Runner
         connect_args = {}
         
         # Add SSL configuration for AWS RDS if not in URL
@@ -50,15 +81,16 @@ def create_database_engine():
             connect_args["sslmode"] = "require"
             logger.info("AWS RDS detected - enabling SSL")
         
+        # Optimized for App Runner with ML workloads
         db_engine = create_engine(
             DATABASE_URL,
             pool_pre_ping=True,           # Verify connections before use
-            pool_recycle=3600,            # Recycle connections every hour (AWS RDS timeout)
-            pool_timeout=60,              # Wait up to 60 seconds for connection
-            max_overflow=20,              # Allow more connections for production
-            pool_size=10,                 # Base connection pool size
+            pool_recycle=1800,            # Shorter recycle for App Runner (30 min)
+            pool_timeout=30,              # Shorter timeout for App Runner
+            max_overflow=10,              # Reasonable overflow for App Runner
+            pool_size=3,                  # Smaller pool for App Runner with ML workloads
             echo=False,                   # Set to True for SQL debugging
-            connect_args=connect_args     # SSL and other connection arguments
+            connect_args=connect_args
         )
         
         # Test the connection
@@ -73,16 +105,11 @@ def create_database_engine():
         
     except OperationalError as e:
         logger.error(f"FAILED: Could not connect to AWS RDS database: {e}")
-        
-        # Provide helpful troubleshooting information for AWS RDS
-        if "amazonaws.com" in DATABASE_URL:
-            logger.error("AWS RDS Connection Troubleshooting:")
-            logger.error("1. Check if the database instance is 'Available' in AWS Console")
-            logger.error("2. Verify security group allows inbound connections on port 5432")
-            logger.error("3. Confirm the database credentials are correct")
-            logger.error("4. Check if your IP address is allowed in the security group")
-            logger.error("5. Verify the database name exists")
-        
+        logger.error("AWS RDS Connection Troubleshooting:")
+        logger.error("1. Check if RDS security group allows App Runner access")
+        logger.error("2. Verify DATABASE_URL environment variable is set correctly")
+        logger.error("3. Ensure RDS instance is publicly accessible")
+        logger.error("4. Check RDS instance status is 'Available'")
         return None
     except Exception as e:
         logger.error(f"Unexpected database error: {e}")
@@ -91,8 +118,18 @@ def create_database_engine():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Starting FastAPI server with AWS RDS...")
+    logger.info("Starting Steganography API on AWS App Runner...")
+    logger.info(f"Python version: {sys.version}")
+    logger.info(f"Platform: App Runner")
+    logger.info(f"Port: {PORT}")
     
+    # Verify ML dependencies first
+    logger.info("Verifying ML dependencies...")
+    if not verify_ml_dependencies():
+        logger.error("CRITICAL: ML dependencies not properly installed")
+        sys.exit(1)
+    
+    # Initialize database connection
     global engine, SessionLocal
     engine = create_database_engine()
     
@@ -112,26 +149,28 @@ async def lifespan(app: FastAPI):
             logger.error(f"FAILED: Could not create database tables: {e}")
             sys.exit(1)
     
-    logger.info("SUCCESS: Server startup complete - AWS RDS ready!")
+    logger.info("SUCCESS: Steganography API startup complete - Ready for requests!")
     yield
     
     # Shutdown
-    logger.info("Server shutdown complete")
+    logger.info("Shutting down Steganography API...")
 
 # Create FastAPI app with lifespan
 app = FastAPI(
     title="Steganography API",
-    description="API for steganography application with AWS RDS",
+    description="Advanced steganography API with ML capabilities on AWS App Runner",
     version="1.0.0",
     lifespan=lifespan
 )
 
-# CORS configuration
+# CORS configuration optimized for App Runner
 origins = [
     "http://localhost:3000",
     "http://192.168.56.1:3000", 
     "https://www.pajangan.online",
     "https://pajangan.online",
+    "https://mn6wdkh7yy.ap-southeast-1.awsapprunner.com",  # Your App Runner URL
+    # Add any other frontend domains you need
 ]
 
 app.add_middleware(
@@ -142,7 +181,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Health check endpoint
+# Enhanced health check endpoint for App Runner
 @app.get("/health")
 async def health_check():
     if engine is None:
@@ -150,21 +189,44 @@ async def health_check():
     
     try:
         with engine.connect() as conn:
-            # More comprehensive health check for production
             result = conn.execute(text("SELECT current_database(), current_user, version()"))
             row = result.fetchone()
+            
+            # Check ML dependencies
+            ml_status = "available"
+            try:
+                import torch
+                import cv2
+                torch_device = "cpu"
+                ml_status = "available"
+            except:
+                ml_status = "unavailable"
             
             return {
                 "status": "healthy",
                 "database": "connected",
                 "db_name": row[0],
                 "db_user": row[1],
-                "environment": "production" if "amazonaws.com" in DATABASE_URL else "development",
-                "timestamp": "2025-08-06T12:55:00Z"
+                "environment": "production",
+                "platform": "aws_apprunner",
+                "ml_dependencies": ml_status,
+                "torch_device": torch_device if ml_status == "available" else None,
+                "timestamp": "2025-08-06T13:00:00Z"
             }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail=f"Database connection failed: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"Health check failed: {str(e)}")
+
+# Root endpoint
+@app.get("/")
+async def root():
+    return {
+        "message": "Steganography API with ML capabilities is running on AWS App Runner!",
+        "docs": "/docs",
+        "health": "/health",
+        "version": "1.0.0",
+        "features": ["steganography", "image_processing", "machine_learning"]
+    }
 
 # Import and include routers
 try:
@@ -199,11 +261,13 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("Starting development server...")
+    logger.info(f"Starting Steganography API server on port {PORT}...")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
-        reload_dirs=["app"]
+        port=PORT,
+        reload=False,          # Disable reload for production
+        workers=1,             # Single worker for App Runner
+        access_log=True,       # Enable access logs for App Runner
+        log_level="info"       # Set log level
     )
