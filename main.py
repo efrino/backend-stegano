@@ -164,14 +164,16 @@ app = FastAPI(
 )
 
 # CORS configuration optimized for App Runner
-origins = [
-    "http://localhost:3000",
-    "http://192.168.56.1:3000", 
-    "https://www.pajangan.online",
-    "https://pajangan.online",
-    "https://mn6wdkh7yy.ap-southeast-1.awsapprunner.com",  # Your App Runner URL
-    # Add any other frontend domains you need
-]
+# origins = [
+#     "http://localhost:3000",
+#     "http://192.168.56.1:3000", 
+#     "https://www.pajangan.online",
+#     "https://pajangan.online",
+#     "https://mn6wdkh7yy.ap-southeast-1.awsapprunner.com",  # Your App Runner URL
+#     # Add any other frontend domains you need
+# ]
+
+origins = ["*"] # Allow all origins for App Runner
 
 app.add_middleware(
     CORSMiddleware,
