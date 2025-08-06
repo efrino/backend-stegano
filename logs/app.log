@@ -74,3 +74,22 @@
 2025-08-06 13:07:21,049 | INFO | main | Server shutdown complete
 2025-08-06 13:28:40,609 | INFO | __main__ | SUCCESS: All API routers included successfully
 2025-08-06 13:28:40,739 | INFO | __main__ | Starting Steganography API server on port 8000...
+2025-08-06 13:28:41,019 | INFO | main | SUCCESS: All API routers included successfully
+2025-08-06 13:28:41,022 | INFO | main | Starting Steganography API on AWS App Runner...
+2025-08-06 13:28:41,023 | INFO | main | Python version: 3.12.6 (tags/v3.12.6:a4a2d2b, Sep  6 2024, 20:11:23) [MSC v.1940 64 bit (AMD64)]
+2025-08-06 13:28:41,023 | INFO | main | Platform: App Runner
+2025-08-06 13:28:41,023 | INFO | main | Port: 8000
+2025-08-06 13:28:41,023 | INFO | main | Verifying ML dependencies...
+2025-08-06 13:28:41,024 | INFO | main | ML Dependencies Check:
+2025-08-06 13:28:41,024 | INFO | main | - PyTorch version: 2.7.1+cpu
+2025-08-06 13:28:41,024 | INFO | main | - TorchVision version: 0.22.1+cpu
+2025-08-06 13:28:41,024 | INFO | main | - OpenCV version: 4.12.0
+2025-08-06 13:28:41,024 | INFO | main | - Scikit-Image version: 0.25.2
+2025-08-06 13:28:41,024 | INFO | main | - NumPy version: 2.2.6
+2025-08-06 13:28:41,024 | INFO | main | SUCCESS: All ML dependencies loaded successfully
+2025-08-06 13:28:41,027 | INFO | main | Testing AWS RDS connection...
+2025-08-06 13:28:41,773 | INFO | main | SUCCESS: Connected to database 'steganography' as user 'postgres'
+2025-08-06 13:28:41,773 | INFO | main | PostgreSQL version: PostgreSQL 17.4 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 12.4.0, 64-bit
+2025-08-06 13:28:41,801 | INFO | main | Creating/verifying database tables...
+2025-08-06 13:28:42,092 | INFO | main | SUCCESS: Database tables created/verified successfully
+2025-08-06 13:28:42,093 | INFO | main | SUCCESS: Steganography API startup complete - Ready for requests!
