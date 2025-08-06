@@ -24,7 +24,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     handlers=[
-        logging.FileHandler(os.path.join(LOG_DIR, "app.log")),
+        logging.FileHandler(os.path.join(LOG_DIR, "app.log"), encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -36,43 +36,52 @@ engine = None
 SessionLocal = None
 
 def create_database_engine():
-    """Create database engine with error handling"""
+    """Create database engine optimized for AWS RDS"""
     if not DATABASE_URL:
         logger.error("DATABASE_URL not found in environment variables")
         return None
     
     try:
+        # AWS RDS optimized connection parameters
+        connect_args = {}
+        
+        # Add SSL configuration for AWS RDS if not in URL
+        if "amazonaws.com" in DATABASE_URL and "sslmode" not in DATABASE_URL:
+            connect_args["sslmode"] = "require"
+            logger.info("AWS RDS detected - enabling SSL")
+        
         db_engine = create_engine(
             DATABASE_URL,
-            pool_pre_ping=True,
-            pool_recycle=300,
-            pool_timeout=30,
-            max_overflow=10,
-            echo=False
+            pool_pre_ping=True,           # Verify connections before use
+            pool_recycle=3600,            # Recycle connections every hour (AWS RDS timeout)
+            pool_timeout=60,              # Wait up to 60 seconds for connection
+            max_overflow=20,              # Allow more connections for production
+            pool_size=10,                 # Base connection pool size
+            echo=False,                   # Set to True for SQL debugging
+            connect_args=connect_args     # SSL and other connection arguments
         )
         
         # Test the connection
+        logger.info("Testing AWS RDS connection...")
         with db_engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-            logger.info("Successfully connected to database")
+            result = conn.execute(text("SELECT version(), current_database(), current_user"))
+            row = result.fetchone()
+            logger.info(f"SUCCESS: Connected to database '{row[1]}' as user '{row[2]}'")
+            logger.info(f"PostgreSQL version: {row[0]}")
         
         return db_engine
         
     except OperationalError as e:
-        logger.error(f"Failed to connect to database: {e}")
+        logger.error(f"FAILED: Could not connect to AWS RDS database: {e}")
         
-        # Try localhost as fallback
-        if "35.197.149.115" in DATABASE_URL:
-            logger.info("Attempting localhost fallback...")
-            localhost_url = DATABASE_URL.replace("35.197.149.115", "localhost")
-            try:
-                db_engine = create_engine(localhost_url, pool_pre_ping=True)
-                with db_engine.connect() as conn:
-                    conn.execute(text("SELECT 1"))
-                logger.info("Connected to localhost database")
-                return db_engine
-            except Exception:
-                logger.error("Localhost fallback failed")
+        # Provide helpful troubleshooting information for AWS RDS
+        if "amazonaws.com" in DATABASE_URL:
+            logger.error("AWS RDS Connection Troubleshooting:")
+            logger.error("1. Check if the database instance is 'Available' in AWS Console")
+            logger.error("2. Verify security group allows inbound connections on port 5432")
+            logger.error("3. Confirm the database credentials are correct")
+            logger.error("4. Check if your IP address is allowed in the security group")
+            logger.error("5. Verify the database name exists")
         
         return None
     except Exception as e:
@@ -82,25 +91,28 @@ def create_database_engine():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Starting FastAPI server...")
+    logger.info("Starting FastAPI server with AWS RDS...")
     
     global engine, SessionLocal
     engine = create_database_engine()
     
     if engine is None:
-        logger.error("Failed to connect to database. Server will start but database operations will fail.")
+        logger.error("CRITICAL: Failed to connect to database. Server will exit.")
+        sys.exit(1)
     else:
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         
         # Import here to avoid circular imports
         try:
             from app.db.database import Base
+            logger.info("Creating/verifying database tables...")
             Base.metadata.create_all(bind=engine)
-            logger.info("Database tables created/verified")
+            logger.info("SUCCESS: Database tables created/verified successfully")
         except Exception as e:
-            logger.error(f"Failed to create database tables: {e}")
+            logger.error(f"FAILED: Could not create database tables: {e}")
+            sys.exit(1)
     
-    logger.info("Server startup complete")
+    logger.info("SUCCESS: Server startup complete - AWS RDS ready!")
     yield
     
     # Shutdown
@@ -109,7 +121,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app with lifespan
 app = FastAPI(
     title="Steganography API",
-    description="API for steganography application",
+    description="API for steganography application with AWS RDS",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -117,7 +129,7 @@ app = FastAPI(
 # CORS configuration
 origins = [
     "http://localhost:3000",
-    "http://192.168.56.1:3000",
+    "http://192.168.56.1:3000", 
     "https://www.pajangan.online",
     "https://pajangan.online",
 ]
@@ -138,11 +150,21 @@ async def health_check():
     
     try:
         with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return {"status": "healthy", "database": "connected"}
+            # More comprehensive health check for production
+            result = conn.execute(text("SELECT current_database(), current_user, version()"))
+            row = result.fetchone()
+            
+            return {
+                "status": "healthy",
+                "database": "connected",
+                "db_name": row[0],
+                "db_user": row[1],
+                "environment": "production" if "amazonaws.com" in DATABASE_URL else "development",
+                "timestamp": "2025-08-06T12:55:00Z"
+            }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail="Database connection failed")
+        raise HTTPException(status_code=503, detail=f"Database connection failed: {str(e)}")
 
 # Import and include routers
 try:
@@ -161,10 +183,11 @@ try:
     app.include_router(likes.router, prefix="/api/likes", tags=["Likes"])
     app.include_router(purchase.router, prefix="/api/my", tags=["Purchase"])
     
-    logger.info("All routers included successfully")
+    logger.info("SUCCESS: All API routers included successfully")
     
 except ImportError as e:
-    logger.error(f"Failed to import routers: {e}")
+    logger.error(f"FAILED: Could not import routers: {e}")
+    logger.error("Please check your project structure and dependencies")
 
 # Mount static files
 static_dir = "static"
@@ -173,3 +196,14 @@ if not os.path.exists(static_dir):
     logger.info(f"Created static directory: {static_dir}")
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+if __name__ == "__main__":
+    import uvicorn
+    logger.info("Starting development server...")
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        reload_dirs=["app"]
+    )

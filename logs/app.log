@@ -1,0 +1,64 @@
+2025-08-06 07:00:02,344 | INFO | app.main | Server FastAPI dimulai...
+2025-08-06 07:14:11,126 | INFO | app.main | Server FastAPI dimulai...
+2025-08-06 07:30:21,298 | INFO | app.main | Starting FastAPI server...
+2025-08-06 07:30:42,304 | ERROR | app.main | Failed to connect to database: (psycopg2.OperationalError) connection to server at "35.197.149.115", port 5432 failed: Connection timed out (0x0000274C/10060)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-06 07:30:42,305 | ERROR | app.main | Please check if:
+2025-08-06 07:30:42,305 | ERROR | app.main | 1. The database server is running
+2025-08-06 07:30:42,306 | ERROR | app.main | 2. The connection details in DATABASE_URL are correct
+2025-08-06 07:30:42,307 | ERROR | app.main | 3. The server accepts connections from your IP
+2025-08-06 07:30:42,307 | ERROR | app.main | 4. Firewall settings allow the connection
+2025-08-06 07:30:42,307 | INFO | app.main | Attempting to use localhost database as fallback...
+2025-08-06 07:30:43,201 | ERROR | app.main | Localhost fallback also failed: 'utf-8' codec can't decode byte 0xab in position 113: invalid start byte
+2025-08-06 07:33:07,479 | INFO | app.main | Starting FastAPI server...
+2025-08-06 07:33:28,486 | ERROR | app.main | Failed to connect to database: (psycopg2.OperationalError) connection to server at "35.197.149.115", port 5432 failed: Connection timed out (0x0000274C/10060)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-06 07:33:28,486 | ERROR | app.main | Please check if:
+2025-08-06 07:33:28,487 | ERROR | app.main | 1. The database server is running
+2025-08-06 07:33:28,487 | ERROR | app.main | 2. The connection details in DATABASE_URL are correct
+2025-08-06 07:33:28,487 | ERROR | app.main | 3. The server accepts connections from your IP
+2025-08-06 07:33:28,487 | ERROR | app.main | 4. Firewall settings allow the connection
+2025-08-06 07:33:28,487 | INFO | app.main | Attempting to use localhost database as fallback...
+2025-08-06 07:33:28,590 | ERROR | app.main | Localhost fallback also failed: 'utf-8' codec can't decode byte 0xab in position 113: invalid start byte
+2025-08-06 07:33:38,531 | INFO | app.main | Starting FastAPI server...
+2025-08-06 07:33:59,537 | ERROR | app.main | Failed to connect to database: (psycopg2.OperationalError) connection to server at "35.197.149.115", port 5432 failed: Connection timed out (0x0000274C/10060)
+	Is the server running on that host and accepting TCP/IP connections?
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-06 07:33:59,537 | ERROR | app.main | Please check if:
+2025-08-06 07:33:59,537 | ERROR | app.main | 1. The database server is running
+2025-08-06 07:33:59,537 | ERROR | app.main | 2. The connection details in DATABASE_URL are correct
+2025-08-06 07:33:59,538 | ERROR | app.main | 3. The server accepts connections from your IP
+2025-08-06 07:33:59,538 | ERROR | app.main | 4. Firewall settings allow the connection
+2025-08-06 07:33:59,538 | INFO | app.main | Attempting to use localhost database as fallback...
+2025-08-06 07:33:59,635 | ERROR | app.main | Localhost fallback also failed: 'utf-8' codec can't decode byte 0xab in position 113: invalid start byte
+2025-08-06 12:54:02,531 | INFO | main | Testing AWS RDS connection...
+2025-08-06 12:54:03,467 | INFO | main | PostgreSQL version: PostgreSQL 17.4 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 12.4.0, 64-bit
+2025-08-06 13:00:29,174 | INFO | __main__ | SUCCESS: All API routers included successfully
+2025-08-06 13:00:29,268 | INFO | __main__ | Starting development server...
+2025-08-06 13:00:37,763 | INFO | __mp_main__ | SUCCESS: All API routers included successfully
+2025-08-06 13:00:37,992 | INFO | main | SUCCESS: All API routers included successfully
+2025-08-06 13:00:38,013 | INFO | main | Starting FastAPI server with AWS RDS...
+2025-08-06 13:00:38,023 | INFO | main | Testing AWS RDS connection...
+2025-08-06 13:00:39,092 | INFO | main | SUCCESS: Connected to database 'steganography' as user 'postgres'
+2025-08-06 13:00:39,093 | INFO | main | PostgreSQL version: PostgreSQL 17.4 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 12.4.0, 64-bit
+2025-08-06 13:00:39,127 | INFO | main | Creating/verifying database tables...
+2025-08-06 13:00:39,432 | INFO | main | SUCCESS: Database tables created/verified successfully
+2025-08-06 13:00:39,432 | INFO | main | SUCCESS: Server startup complete - AWS RDS ready!
+2025-08-06 13:01:51,538 | INFO | watchfiles.main | 1 change detected
+2025-08-06 13:01:51,698 | INFO | main | Server shutdown complete
+2025-08-06 13:02:00,350 | INFO | __mp_main__ | SUCCESS: All API routers included successfully
+2025-08-06 13:02:00,519 | INFO | main | SUCCESS: All API routers included successfully
+2025-08-06 13:02:00,521 | INFO | main | Starting FastAPI server with AWS RDS...
+2025-08-06 13:02:00,522 | INFO | main | Testing AWS RDS connection...
+2025-08-06 13:02:01,084 | INFO | main | SUCCESS: Connected to database 'steganography' as user 'postgres'
+2025-08-06 13:02:01,086 | INFO | main | PostgreSQL version: PostgreSQL 17.4 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 12.4.0, 64-bit
+2025-08-06 13:02:01,116 | INFO | main | Creating/verifying database tables...
+2025-08-06 13:02:01,375 | INFO | main | SUCCESS: Database tables created/verified successfully
+2025-08-06 13:02:01,376 | INFO | main | SUCCESS: Server startup complete - AWS RDS ready!
+2025-08-06 13:06:03,386 | INFO | __main__ | SUCCESS: All API routers included successfully
+2025-08-06 13:06:03,517 | INFO | __main__ | Starting development server...

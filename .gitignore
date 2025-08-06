@@ -1,4 +1,4 @@
 ﻿.env 
 venv/
 .vercel
-logs/
+logs/v
