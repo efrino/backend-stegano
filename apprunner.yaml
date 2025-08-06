@@ -4,16 +4,15 @@ build:
   commands:
     build:
       - echo "Starting build for Steganography ML application..."
-      - echo "Upgrading pip and setuptools..."
       - python -m pip install --upgrade pip setuptools wheel
-      - echo "Installing system dependencies for image processing..."
-      - apt-get update
-      - apt-get install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1
-      - echo "Installing Python dependencies (this may take several minutes for ML packages)..."
-      - pip install --no-cache-dir torch==2.1.0+cpu torchvision==0.16.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu
-      - pip install --no-cache-dir -r requirements.txt
-      - echo "Verifying installations..."
-      - python -c "import torch; import torchvision; import cv2; import skimage; print('ML dependencies installed successfully')"
+      - echo "Installing PyTorch CPU-only version..."
+      - pip install torch==2.1.0+cpu torchvision==0.16.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+      - echo "Installing other dependencies..."
+      - pip install -r requirements.txt
+      - echo "Verifying critical imports..."
+      - python -c "import fastapi, sqlalchemy, psycopg2; print('Core dependencies OK')"
+      - python -c "import torch, torchvision; print('PyTorch OK')"
+      - python -c "import cv2, skimage, imagehash; print('Image processing OK')"
       - echo "Build completed successfully"
 run:
   runtime-version: python311
@@ -24,6 +23,4 @@ run:
     - name: PORT
       value: "8000"
     - name: PYTHONUNBUFFERED
-      value: "1"
-    - name: OMP_NUM_THREADS
       value: "1"
